@@ -1,0 +1,2007 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>현미경의 광학적 개선 - 색수차에서 아포크로맷까지</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --red: #ff4444;
+    --green: #44cc44;
+    --blue: #4488ff;
+    --violet: #8844ff;
+    --bg-dark: #0a0a1a;
+    --bg-section: #111128;
+    --text: #e8e8f0;
+    --accent: #66aaff;
+  }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--bg-dark);
+    color: var(--text);
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+  }
+
+  /* ── Scroll Progress Bar ── */
+  .progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--red), var(--green), var(--blue));
+    z-index: 1000;
+    transition: width 0.1s;
+  }
+
+  /* ── Navigation ── */
+  nav {
+    position: fixed;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  nav a {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.3);
+    background: transparent;
+    transition: all 0.3s;
+    display: block;
+  }
+  nav a.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    box-shadow: 0 0 10px var(--accent);
+  }
+  nav a:hover {
+    border-color: white;
+  }
+
+  /* ── Sections ── */
+  section {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 40px;
+    position: relative;
+  }
+
+  h1 {
+    font-size: 3.2em;
+    font-weight: 900;
+    text-align: center;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, #ff6688, #66aaff, #44ddaa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  h2 {
+    font-size: 2.2em;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 30px;
+    color: #fff;
+  }
+  h3 {
+    font-size: 1.4em;
+    font-weight: 500;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+  .subtitle {
+    font-size: 1.2em;
+    color: rgba(255,255,255,0.6);
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  .desc {
+    max-width: 700px;
+    text-align: center;
+    line-height: 1.8;
+    font-size: 1.05em;
+    color: rgba(255,255,255,0.8);
+  }
+
+  /* ── Hero ── */
+  #hero {
+    background: radial-gradient(ellipse at center, #1a1a3a 0%, var(--bg-dark) 70%);
+  }
+  .hero-lens {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    border: 3px solid rgba(255,255,255,0.15);
+    position: relative;
+    margin: 40px 0;
+    animation: heroGlow 4s ease-in-out infinite;
+    background: radial-gradient(circle, rgba(100,150,255,0.1), transparent);
+  }
+  @keyframes heroGlow {
+    0%, 100% { box-shadow: 0 0 30px rgba(100,150,255,0.2); }
+    50% { box-shadow: 0 0 60px rgba(100,150,255,0.5); }
+  }
+  .hero-ray {
+    position: absolute;
+    width: 3px;
+    height: 80px;
+    top: -80px;
+    left: 50%;
+    transform-origin: bottom center;
+    animation: heroRays 3s ease-in-out infinite;
+  }
+  .hero-ray:nth-child(1) { background: var(--red); transform: translateX(-1.5px) rotate(-15deg); animation-delay: 0s; }
+  .hero-ray:nth-child(2) { background: var(--green); transform: translateX(-1.5px) rotate(0deg); animation-delay: 0.2s; }
+  .hero-ray:nth-child(3) { background: var(--blue); transform: translateX(-1.5px) rotate(15deg); animation-delay: 0.4s; }
+  @keyframes heroRays {
+    0%, 100% { opacity: 0.4; height: 80px; }
+    50% { opacity: 1; height: 100px; }
+  }
+  .scroll-hint {
+    position: absolute;
+    bottom: 30px;
+    animation: bounce 2s infinite;
+    color: rgba(255,255,255,0.4);
+    font-size: 0.9em;
+  }
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(10px); }
+  }
+
+  /* ── Canvas Containers ── */
+  .canvas-wrap {
+    position: relative;
+    margin: 20px 0;
+  }
+  canvas {
+    display: block;
+    border-radius: 12px;
+  }
+
+  /* ── Section 1: Chromatic Aberration ── */
+  #section1 {
+    background: linear-gradient(180deg, var(--bg-dark), #0d0d25);
+  }
+  .aberration-demo {
+    display: flex;
+    gap: 60px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 20px;
+  }
+  .prism-box {
+    text-align: center;
+  }
+
+  /* ── Image Comparison ── */
+  .image-comparison {
+    display: flex;
+    gap: 40px;
+    margin: 30px 0;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .img-card {
+    width: 260px;
+    height: 200px;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    border: 2px solid rgba(255,255,255,0.1);
+  }
+  .img-card canvas {
+    width: 100%;
+    height: 100%;
+  }
+  .img-label {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    text-align: center;
+    padding: 8px;
+    background: rgba(0,0,0,0.7);
+    font-size: 0.9em;
+    font-weight: 500;
+  }
+
+  /* ── Section 2: Achromatic ── */
+  #section2 {
+    background: linear-gradient(180deg, #0d0d25, #0a1520);
+  }
+  .lens-diagram {
+    display: flex;
+    gap: 80px;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 20px 0;
+  }
+
+  /* ── Section 3: Apochromat ── */
+  #section3 {
+    background: linear-gradient(180deg, #0a1520, #0a0a1a);
+  }
+  .timeline {
+    display: flex;
+    gap: 40px;
+    align-items: flex-start;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 20px 0;
+  }
+  .person-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 24px;
+    width: 260px;
+    text-align: center;
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+  .person-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  }
+  .person-icon {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    margin: 0 auto 16px;
+    overflow: hidden;
+    border: 3px solid rgba(255,255,255,0.15);
+  }
+  .person-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+    filter: sepia(0.15) brightness(0.95);
+    transition: filter 0.3s;
+  }
+  .person-card:hover .person-icon img {
+    filter: sepia(0) brightness(1);
+  }
+  .person-card h3 { text-align: center; }
+  .person-card .year { color: rgba(255,255,255,0.4); font-size: 0.9em; margin-bottom: 10px; }
+  .person-card p { font-size: 0.92em; line-height: 1.6; color: rgba(255,255,255,0.7); }
+
+  /* ── Section 4: Comparison ── */
+  #section4 {
+    background: linear-gradient(180deg, #0a0a1a, #0d0d25);
+  }
+  .comparison-row {
+    display: flex;
+    gap: 30px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 20px 0;
+  }
+  .compare-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 30px;
+    width: 280px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .compare-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+  }
+  .compare-card:nth-child(1)::before { background: var(--red); }
+  .compare-card:nth-child(2)::before { background: var(--green); }
+  .compare-card:nth-child(3)::before { background: var(--blue); }
+  .compare-card h3 { margin-bottom: 15px; }
+  .compare-card canvas { margin: 10px auto; }
+  .compare-card p { font-size: 0.9em; line-height: 1.7; color: rgba(255,255,255,0.7); }
+
+  /* ── Section 5: Summary ── */
+  #section5 {
+    background: radial-gradient(ellipse at center, #1a1a3a 0%, var(--bg-dark) 70%);
+  }
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    max-width: 1000px;
+    margin: 30px 0;
+  }
+  .summary-item {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 30px;
+    position: relative;
+    overflow: hidden;
+  }
+  .summary-item .num {
+    font-size: 4em;
+    font-weight: 900;
+    opacity: 0.06;
+    position: absolute;
+    top: 10px;
+    right: 20px;
+  }
+  .summary-item h3 { margin-bottom: 12px; }
+  .summary-item p { font-size: 0.95em; line-height: 1.7; color: rgba(255,255,255,0.7); }
+
+  /* ── Animations (scroll-triggered) ── */
+  .fade-in {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .fade-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .fade-in-left {
+    opacity: 0;
+    transform: translateX(-60px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .fade-in-left.visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  .fade-in-right {
+    opacity: 0;
+    transform: translateX(60px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .fade-in-right.visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  /* ── Wavelength Bar ── */
+  .wavelength-bar {
+    width: 100%;
+    max-width: 600px;
+    height: 40px;
+    border-radius: 8px;
+    margin: 20px 0;
+    background: linear-gradient(90deg,
+      #8b00ff, #4b0082, #0000ff, #00ff00, #ffff00, #ff7f00, #ff0000
+    );
+    position: relative;
+  }
+  .wavelength-bar .label-left,
+  .wavelength-bar .label-right {
+    position: absolute;
+    bottom: -24px;
+    font-size: 0.8em;
+    color: rgba(255,255,255,0.5);
+  }
+  .wavelength-bar .label-left { left: 0; }
+  .wavelength-bar .label-right { right: 0; }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    h1 { font-size: 2em; }
+    h2 { font-size: 1.6em; }
+    section { padding: 40px 20px; }
+    .aberration-demo, .lens-diagram, .timeline, .comparison-row { gap: 20px; }
+    nav { right: 8px; }
+    nav a { width: 10px; height: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<nav id="mainNav">
+  <a href="#hero" title="시작"></a>
+  <a href="#section1" title="색수차"></a>
+  <a href="#section2" title="색지움렌즈"></a>
+  <a href="#section3" title="아포크로맷"></a>
+  <a href="#section4" title="비교"></a>
+  <a href="#section5" title="정리"></a>
+</nav>
+
+<!-- ═══════════════════════════════════════ HERO ═══════════════════════════════════════ -->
+<section id="hero">
+  <h1>현미경의 광학적 개선</h1>
+  <p class="subtitle">19세기, 빛의 비밀을 풀어 미시세계의 문을 연 이야기</p>
+  <div class="hero-lens">
+    <div class="hero-ray"></div>
+    <div class="hero-ray"></div>
+    <div class="hero-ray"></div>
+  </div>
+  <p class="desc">색수차의 발견부터 아포크로맷 렌즈의 발명까지,<br>현미경 광학의 혁명적 발전을 살펴봅니다.</p>
+  <div class="scroll-hint">아래로 스크롤하세요 &#9660;</div>
+</section>
+
+<!-- ═══════════════════════ SECTION 1: 색수차란? ═══════════════════════ -->
+<section id="section1">
+  <h2 class="fade-in">색수차 (Chromatic Aberration) 란?</h2>
+  <p class="desc fade-in" style="transition-delay:0.15s">
+    빛은 여러 파장(색깔)으로 이루어져 있습니다.<br>
+    렌즈를 통과할 때 <strong>파장마다 굴절률이 달라</strong><br>
+    각 색의 빛이 서로 다른 지점에 초점을 맺게 됩니다.
+  </p>
+
+  <div class="wavelength-bar fade-in" style="transition-delay:0.3s">
+    <span class="label-left">380nm (보라)</span>
+    <span class="label-right">700nm (빨강)</span>
+  </div>
+
+  <div class="fade-in" style="transition-delay:0.3s; width:100%; display:flex; flex-direction:column; align-items:center;">
+    <h3 style="margin-bottom:5px;">단일 렌즈의 색수차</h3>
+    <p style="font-size:0.88em; color:rgba(255,255,255,0.45); margin-bottom:15px;">파장이 짧을수록(파랑) 더 많이 굴절되어 가까이, 파장이 길수록(빨강) 적게 굴절되어 멀리 초점이 맺힘</p>
+    <div class="canvas-wrap">
+      <canvas id="canvasAberration" width="900" height="460"></canvas>
+    </div>
+  </div>
+
+  <div class="fade-in" style="transition-delay:0.45s; margin-top:25px; display:flex; gap:30px; flex-wrap:wrap; justify-content:center; align-items:flex-start;">
+    <div style="max-width:340px;">
+      <h3>왜 문제가 되는가?</h3>
+      <p style="line-height:1.8; color:rgba(255,255,255,0.7); margin-top:10px;">
+        색수차가 있으면 상의 가장자리에 <span style="color:var(--red)">빨간색</span>이나
+        <span style="color:var(--blue)">파란색</span> 번짐이 생깁니다.
+        현미경에서는 세포 구조를 관찰할 때 경계가 흐릿해지고,
+        미세한 구조를 구별하기 어렵게 만듭니다.
+      </p>
+    </div>
+    <div class="image-comparison" style="margin-top:0;">
+      <div class="img-card">
+        <canvas id="canvasBlurry" width="260" height="200"></canvas>
+        <div class="img-label" style="color:var(--red);">색수차 있음 (흐릿)</div>
+      </div>
+      <div class="img-card">
+        <canvas id="canvasSharp" width="260" height="200"></canvas>
+        <div class="img-label" style="color:var(--green);">색수차 보정 (선명)</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ SECTION 2: 색지움렌즈 ═══════════════════════ -->
+<section id="section2">
+  <h2 class="fade-in">색지움렌즈 (Achromatic Lens)</h2>
+  <p class="desc fade-in" style="transition-delay:0.15s">
+    <strong>굴절률이 다른 두 종류의 유리</strong>를 조합하여<br>
+    두 가지 색(빨강, 파랑)의 초점을 일치시킨 렌즈입니다.
+  </p>
+
+  <div class="fade-in" style="transition-delay:0.3s; width:100%; display:flex; flex-direction:column; align-items:center;">
+    <h3 style="margin-bottom:5px;">색지움렌즈의 광학 원리</h3>
+    <p style="font-size:0.88em; color:rgba(255,255,255,0.45); margin-bottom:15px;">두 종류의 유리를 접합하여 빨강과 파랑의 초점을 일치시키지만, 초록은 약간 어긋남</p>
+    <div class="canvas-wrap">
+      <canvas id="canvasAchromat" width="900" height="460"></canvas>
+    </div>
+  </div>
+
+  <div class="fade-in" style="transition-delay:0.45s; margin-top:25px; display:flex; gap:30px; flex-wrap:wrap; justify-content:center;">
+    <div style="max-width:340px;">
+      <h3>원리</h3>
+      <div style="margin-top:15px;">
+        <div style="display:flex; gap:12px; align-items:flex-start; margin-bottom:18px;">
+          <div style="min-width:44px; height:44px; border-radius:50%; background:rgba(100,180,255,0.15); display:flex; align-items:center; justify-content:center; font-weight:700; color:var(--accent);">1</div>
+          <div>
+            <strong style="color:#fff;">볼록렌즈 (크라운 유리)</strong>
+            <p style="font-size:0.9em; color:rgba(255,255,255,0.6); margin-top:4px;">굴절력이 높고 분산이 낮은 유리</p>
+          </div>
+        </div>
+        <div style="display:flex; gap:12px; align-items:flex-start; margin-bottom:18px;">
+          <div style="min-width:44px; height:44px; border-radius:50%; background:rgba(100,180,255,0.15); display:flex; align-items:center; justify-content:center; font-weight:700; color:var(--accent);">2</div>
+          <div>
+            <strong style="color:#fff;">오목렌즈 (플린트 유리)</strong>
+            <p style="font-size:0.9em; color:rgba(255,255,255,0.6); margin-top:4px;">분산이 높아 색수차를 상쇄</p>
+          </div>
+        </div>
+        <div style="display:flex; gap:12px; align-items:flex-start;">
+          <div style="min-width:44px; height:44px; border-radius:50%; background:rgba(100,180,255,0.15); display:flex; align-items:center; justify-content:center; font-weight:700; color:var(--accent);">3</div>
+          <div>
+            <strong style="color:#fff;">두 렌즈를 접합</strong>
+            <p style="font-size:0.9em; color:rgba(255,255,255,0.6); margin-top:4px;">빨강과 파랑의 초점이 일치하여<br>색 번짐이 크게 감소</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="max-width:340px;">
+      <h3>각 렌즈의 역할</h3>
+      <div style="margin-top:15px;">
+        <div style="display:flex; gap:10px; align-items:center; margin-bottom:12px;">
+          <div style="width:20px; height:20px; border-radius:4px; background:rgba(100,160,255,0.35); border:2px solid rgba(100,160,255,0.7);"></div>
+          <span style="color:rgba(255,255,255,0.7); font-size:0.92em;"><strong style="color:#68a0ff;">볼록렌즈</strong> (크라운 유리) — 주 굴절력, 낮은 분산</span>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center; margin-bottom:12px;">
+          <div style="width:20px; height:20px; border-radius:4px; background:rgba(255,180,80,0.3); border:2px solid rgba(255,180,80,0.7);"></div>
+          <span style="color:rgba(255,255,255,0.7); font-size:0.92em;"><strong style="color:#ffb450;">오목렌즈</strong> (플린트 유리) — 높은 분산으로 색수차 상쇄</span>
+        </div>
+      </div>
+      <div style="margin-top:20px; padding:16px; background:rgba(255,200,50,0.08); border:1px solid rgba(255,200,50,0.2); border-radius:10px;">
+        <p style="font-size:0.88em; color:rgba(255,255,255,0.7);">
+          <strong style="color:#ffcc44;">한계:</strong> 빨강+파랑만 보정하므로 <span style="color:#33cc33;">초록</span> 계열의 잔여 색수차가 남습니다. 이를 <em>이차 스펙트럼</em>이라 합니다.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ SECTION 3: 아포크로맷 ═══════════════════════ -->
+<section id="section3">
+  <h2 class="fade-in">아포크로맷 (Apochromat)</h2>
+  <p class="desc fade-in" style="transition-delay:0.15s">
+    칼 자이스와 에른스트 아베의 협력으로 탄생한<br>
+    <strong>모든 색 대역의 색수차를 보정</strong>하는 궁극의 렌즈
+  </p>
+
+  <div class="timeline fade-in" style="transition-delay:0.3s">
+    <div class="person-card">
+      <div class="person-icon">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Carl_Zeiss_from_Auerbach_1907.png/500px-Carl_Zeiss_from_Auerbach_1907.png" alt="Carl Zeiss portrait">
+      </div>
+      <h3>칼 자이스</h3>
+      <div class="year">Carl Zeiss, 1816-1888</div>
+      <p>독일의 광학기기 제조업자.<br>정밀한 현미경 제작에 헌신하며 과학적 광학 설계의 필요성을 인식</p>
+    </div>
+    <div class="person-card">
+      <div class="person-icon">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Ernst_Abbe_%28HeidICON_29803%29_%28cropped%29.jpg/500px-Ernst_Abbe_%28HeidICON_29803%29_%28cropped%29.jpg" alt="Ernst Abbe portrait">
+      </div>
+      <h3>에른스트 아베</h3>
+      <div class="year">Ernst Abbe, 1840-1905</div>
+      <p>물리학자. 고급 수학적 광학 원리에 기초하여 현미경 렌즈를 설계, 아포크로맷 렌즈 개발</p>
+    </div>
+  </div>
+
+  <div class="fade-in" style="transition-delay:0.4s; width:100%; display:flex; flex-direction:column; align-items:center;">
+    <h3 style="margin-bottom:5px;">아포크로맷의 광학 원리</h3>
+    <p style="font-size:0.88em; color:rgba(255,255,255,0.45); margin-bottom:15px;">각 렌즈 표면에서 R/G/B 광선이 서로 다르게 굴절되어 최종적으로 하나의 초점에 수렴</p>
+    <div class="canvas-wrap">
+      <canvas id="canvasApochromat" width="900" height="460"></canvas>
+    </div>
+  </div>
+
+  <div class="fade-in" style="transition-delay:0.55s; margin-top:25px; display:flex; gap:30px; flex-wrap:wrap; justify-content:center;">
+    <div style="max-width:340px;">
+      <h3>핵심 차이점</h3>
+      <div style="margin-top:15px; line-height:1.8; color:rgba(255,255,255,0.7);">
+        <p>아포크로맷은 <strong style="color:#fff;">세 가지 이상의 색</strong>(<span style="color:var(--red);">빨강</span>, <span style="color:var(--green);">초록</span>, <span style="color:var(--blue);">파랑</span>)의 초점을 동일 지점에 일치시킵니다.</p>
+        <p style="margin-top:12px;">이를 위해 <strong style="color:#fff;">세 장 이상의 렌즈</strong>를 특수 유리(형석 등)로 제작하여 조합합니다.</p>
+        <p style="margin-top:12px;">결과적으로 사실상 <strong style="color:#fff;">모든 가시광선 대역</strong>에서 색수차가 제거되어 매우 선명한 상을 얻습니다.</p>
+      </div>
+    </div>
+    <div style="max-width:340px;">
+      <h3>각 렌즈의 역할</h3>
+      <div style="margin-top:15px;">
+        <div style="display:flex; gap:10px; align-items:center; margin-bottom:12px;">
+          <div style="width:20px; height:20px; border-radius:4px; background:rgba(100,160,255,0.35); border:2px solid rgba(100,160,255,0.7);"></div>
+          <span style="color:rgba(255,255,255,0.7); font-size:0.92em;"><strong style="color:#68a0ff;">렌즈 1</strong> (크라운 유리, 볼록) — 주 굴절력</span>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center; margin-bottom:12px;">
+          <div style="width:20px; height:20px; border-radius:4px; background:rgba(255,180,80,0.3); border:2px solid rgba(255,180,80,0.7);"></div>
+          <span style="color:rgba(255,255,255,0.7); font-size:0.92em;"><strong style="color:#ffb450;">렌즈 2</strong> (플린트 유리, 오목) — 분산 상쇄</span>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <div style="width:20px; height:20px; border-radius:4px; background:rgba(100,220,160,0.25); border:2px solid rgba(100,220,160,0.6);"></div>
+          <span style="color:rgba(255,255,255,0.7); font-size:0.92em;"><strong style="color:#64dca0;">렌즈 3</strong> (형석/특수 유리, 볼록) — 잔여 색수차 최종 보정</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ SECTION 4: 3종 비교 ═══════════════════════ -->
+<section id="section4">
+  <h2 class="fade-in">렌즈 유형별 비교</h2>
+  <p class="desc fade-in" style="transition-delay:0.15s">
+    단일 렌즈, 색지움렌즈, 아포크로맷의 색수차 보정 수준을 비교합니다.
+  </p>
+
+  <div class="comparison-row" style="margin-top:30px;">
+    <div class="compare-card fade-in" style="transition-delay:0.2s">
+      <h3 style="color:var(--red);">단일 렌즈</h3>
+      <canvas id="canvasComp1" width="220" height="180"></canvas>
+      <p>보정 없음.<br>모든 색의 초점이 다름.<br><strong>색 번짐 심함</strong></p>
+    </div>
+    <div class="compare-card fade-in" style="transition-delay:0.35s">
+      <h3 style="color:var(--green);">색지움렌즈</h3>
+      <canvas id="canvasComp2" width="220" height="180"></canvas>
+      <p>2색 보정.<br>빨강+파랑 초점 일치.<br><strong>잔여 색수차 존재</strong></p>
+    </div>
+    <div class="compare-card fade-in" style="transition-delay:0.5s">
+      <h3 style="color:var(--blue);">아포크로맷</h3>
+      <canvas id="canvasComp3" width="220" height="180"></canvas>
+      <p>3색 이상 보정.<br>모든 색 초점 일치.<br><strong>거의 완벽한 상</strong></p>
+    </div>
+  </div>
+
+  <!-- Interactive focal point chart -->
+  <div class="fade-in" style="transition-delay:0.6s; margin-top:40px;">
+    <h3 style="text-align:center; margin-bottom:15px;">파장별 초점 거리 편차</h3>
+    <canvas id="canvasChart" width="700" height="280"></canvas>
+    <p style="text-align:center; font-size:0.85em; color:rgba(255,255,255,0.4); margin-top:8px;">
+      0에 가까울수록 색수차가 적음
+    </p>
+  </div>
+</section>
+
+<!-- ═══════════════════════ SECTION 5: 정리 ═══════════════════════ -->
+<section id="section5">
+  <h2 class="fade-in">현미경 광학의 혁명</h2>
+  <p class="desc fade-in" style="transition-delay:0.15s">
+    19세기 광학의 발전은 현미경의 성능을 비약적으로 향상시켜<br>
+    이전에는 관찰할 수 없었던 세포의 미세 구조를 밝혀냈습니다.
+  </p>
+
+  <div class="summary-grid fade-in" style="transition-delay:0.3s">
+    <div class="summary-item">
+      <div class="num">1</div>
+      <h3>색수차 문제 인식</h3>
+      <p>다른 파장의 빛이 렌즈에서 서로 다른 정도로 굴절되어 상이 흐릿해지는 현상을 이해하게 되었습니다.</p>
+    </div>
+    <div class="summary-item">
+      <div class="num">2</div>
+      <h3>색지움렌즈의 발명</h3>
+      <p>크라운 유리와 플린트 유리를 조합하여 두 가지 색의 초점을 일치시키는 데 성공, 상의 선명도가 크게 향상되었습니다.</p>
+    </div>
+    <div class="summary-item">
+      <div class="num">3</div>
+      <h3>아포크로맷 렌즈</h3>
+      <p>칼 자이스와 에른스트 아베의 협력으로 모든 가시광선 대역의 색수차를 보정하는 렌즈가 탄생했습니다.</p>
+    </div>
+    <div class="summary-item">
+      <div class="num">4</div>
+      <h3>세포학의 발전</h3>
+      <p>개선된 현미경으로 세포 내 미세 구조(핵, 소기관 등)를 관찰할 수 있게 되어 생물학이 크게 발전했습니다.</p>
+    </div>
+  </div>
+
+  <div class="fade-in" style="transition-delay:0.5s; margin-top:40px; text-align:center;">
+    <canvas id="canvasTimeline" width="800" height="120"></canvas>
+  </div>
+</section>
+
+<script>
+// ════════════════════════════════════════════════════════
+// SCROLL ANIMATIONS & NAVIGATION
+// ════════════════════════════════════════════════════════
+const sections = document.querySelectorAll('section');
+const navLinks = document.querySelectorAll('nav a');
+const progressBar = document.getElementById('progressBar');
+
+function updateScroll() {
+  const scrollTop = window.scrollY;
+  const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+  progressBar.style.width = (scrollTop / docHeight * 100) + '%';
+
+  sections.forEach((sec, i) => {
+    const rect = sec.getBoundingClientRect();
+    if (rect.top < window.innerHeight * 0.5 && rect.bottom > window.innerHeight * 0.5) {
+      navLinks.forEach(l => l.classList.remove('active'));
+      navLinks[i]?.classList.add('active');
+    }
+  });
+}
+
+// Intersection Observer for fade-in
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.15 });
+
+document.querySelectorAll('.fade-in, .fade-in-left, .fade-in-right').forEach(el => observer.observe(el));
+
+window.addEventListener('scroll', updateScroll);
+updateScroll();
+
+// ════════════════════════════════════════════════════════
+// HELPER DRAWING FUNCTIONS
+// ════════════════════════════════════════════════════════
+function drawLens(ctx, cx, cy, h, w, color, fill) {
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - h/2);
+  ctx.quadraticCurveTo(cx + w, cy, cx, cy + h/2);
+  ctx.quadraticCurveTo(cx - w, cy, cx, cy - h/2);
+  ctx.closePath();
+  if (fill) {
+    ctx.fillStyle = color;
+    ctx.fill();
+  }
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+}
+
+function drawConcaveLens(ctx, cx, cy, h, w, color, fill) {
+  ctx.beginPath();
+  ctx.moveTo(cx - w/2, cy - h/2);
+  ctx.quadraticCurveTo(cx + w*0.3, cy, cx - w/2, cy + h/2);
+  ctx.lineTo(cx + w/2, cy + h/2);
+  ctx.quadraticCurveTo(cx - w*0.3, cy, cx + w/2, cy - h/2);
+  ctx.closePath();
+  if (fill) {
+    ctx.fillStyle = color;
+    ctx.fill();
+  }
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+}
+
+// ════════════════════════════════════════════════════════
+// SECTION 1: CHROMATIC ABERRATION ANIMATION (detailed)
+// ════════════════════════════════════════════════════════
+(function() {
+  const canvas = document.getElementById('canvasAberration');
+  const ctx = canvas.getContext('2d');
+  const W = 900, H = 460;
+  let time = 0;
+
+  const axisY = H / 2;
+  const lensH = 300;
+  const halfH = lensH / 2;
+
+  // Single biconvex lens
+  const lens = { cx: 240, leftR: 48, rightR: 48, thick: 52 };
+
+  function drawSingleLens() {
+    const { cx, leftR, rightR, thick } = lens;
+    const lx = cx - thick / 2;
+    const rx = cx + thick / 2;
+    ctx.beginPath();
+    ctx.moveTo(lx, axisY - halfH);
+    ctx.quadraticCurveTo(lx - leftR, axisY, lx, axisY + halfH);
+    ctx.lineTo(rx, axisY + halfH);
+    ctx.quadraticCurveTo(rx + rightR, axisY, rx, axisY - halfH);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(150,200,255,0.18)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(150,200,255,0.50)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  // Three separate focal points for each color
+  const focalB = 500;  // Blue focuses closest (most refraction)
+  const focalG = 580;  // Green in the middle
+  const focalR = 680;  // Red focuses farthest (least refraction)
+
+  function getAberrationRayPaths(yIn) {
+    const dy = yIn - axisY;
+    const entryX = lens.cx - lens.thick / 2 - 2;
+    const exitX = lens.cx + lens.thick / 2 + 2;
+    const pastX = 870;
+
+    return {
+      red: [
+        { x: 0, y: yIn },
+        { x: entryX, y: yIn },
+        // Red bends least inside the lens
+        { x: exitX, y: axisY + dy * 0.78 },
+        // Converges at focalR
+        { x: focalR, y: axisY },
+        // Diverges past focus
+        { x: pastX, y: axisY - dy * 0.30 },
+      ],
+      green: [
+        { x: 0, y: yIn },
+        { x: entryX, y: yIn },
+        // Green bends medium
+        { x: exitX, y: axisY + dy * 0.58 },
+        // Converges at focalG
+        { x: focalG, y: axisY },
+        // Diverges
+        { x: pastX, y: axisY - dy * 0.42 },
+      ],
+      blue: [
+        { x: 0, y: yIn },
+        { x: entryX, y: yIn },
+        // Blue bends most
+        { x: exitX, y: axisY + dy * 0.34 },
+        // Converges at focalB
+        { x: focalB, y: axisY },
+        // Diverges
+        { x: pastX, y: axisY - dy * 0.55 },
+      ],
+    };
+  }
+
+  const rayColors = { red: '#ff4444', green: '#33cc33', blue: '#3388ff' };
+
+  function drawRayPath(points, color, alpha) {
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) {
+      ctx.lineTo(points[i].x, points[i].y);
+    }
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.2;
+    ctx.globalAlpha = alpha;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  function drawPulse(points, color, t) {
+    const totalLen = [0];
+    let cumLen = 0;
+    for (let i = 1; i < points.length; i++) {
+      const dx2 = points[i].x - points[i-1].x;
+      const dy2 = points[i].y - points[i-1].y;
+      cumLen += Math.sqrt(dx2*dx2 + dy2*dy2);
+      totalLen.push(cumLen);
+    }
+    const targetLen = t * cumLen;
+    for (let i = 1; i < totalLen.length; i++) {
+      if (totalLen[i] >= targetLen) {
+        const segFrac = (targetLen - totalLen[i-1]) / (totalLen[i] - totalLen[i-1]);
+        const px = points[i-1].x + (points[i].x - points[i-1].x) * segFrac;
+        const py = points[i-1].y + (points[i].y - points[i-1].y) * segFrac;
+        const grad = ctx.createRadialGradient(px, py, 0, px, py, 10);
+        grad.addColorStop(0, color);
+        grad.addColorStop(1, 'transparent');
+        ctx.beginPath();
+        ctx.arc(px, py, 10, 0, Math.PI * 2);
+        ctx.fillStyle = grad;
+        ctx.globalAlpha = 0.7;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        break;
+      }
+    }
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = 'rgba(8,8,24,0.4)';
+    ctx.fillRect(0, 0, W, H);
+
+    // ── Optical axis ──
+    ctx.setLineDash([6, 6]);
+    ctx.beginPath();
+    ctx.moveTo(0, axisY);
+    ctx.lineTo(W, axisY);
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // ── Lens ──
+    drawSingleLens();
+
+    // Lens label
+    ctx.font = '13px Noto Sans KR';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(150,200,255,0.8)';
+    ctx.fillText('단일 볼록렌즈', lens.cx, axisY + halfH + 24);
+
+    // ── Incoming white rays ──
+    const rayInputs = [
+      { yIn: axisY - 80 },
+      { yIn: axisY - 40 },
+      { yIn: axisY },
+      { yIn: axisY + 40 },
+      { yIn: axisY + 80 },
+    ];
+
+    const pulse = Math.sin(time * 2) * 0.12 + 0.88;
+    rayInputs.forEach(r => {
+      ctx.beginPath();
+      ctx.moveTo(0, r.yIn);
+      ctx.lineTo(lens.cx - lens.thick / 2 - 2, r.yIn);
+      ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+      ctx.lineWidth = r.yIn === axisY ? 2.5 : 2;
+      ctx.globalAlpha = pulse;
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    });
+
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 14px Noto Sans KR';
+    ctx.textAlign = 'left';
+    ctx.fillText('백색광', 12, axisY - 95);
+
+    // ── Color rays ──
+    const pulseT = (time * 0.3) % 1;
+    const colorOrder = ['red', 'green', 'blue'];
+
+    rayInputs.forEach(r => {
+      const paths = getAberrationRayPaths(r.yIn);
+      colorOrder.forEach(c => {
+        const pts = paths[c];
+        const rayFromLens = pts.slice(1);
+        drawRayPath(rayFromLens, rayColors[c], r.yIn === axisY ? 0.9 : 0.7);
+        drawPulse(pts, rayColors[c], pulseT);
+      });
+    });
+
+    // ── Focal point markers ──
+    const focals = [
+      { x: focalB, color: '#3388ff', label: 'B 초점' },
+      { x: focalG, color: '#33cc33', label: 'G 초점' },
+      { x: focalR, color: '#ff4444', label: 'R 초점' },
+    ];
+
+    focals.forEach((f, i) => {
+      // Vertical dashed line
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(f.x, axisY - 50);
+      ctx.lineTo(f.x, axisY + 50);
+      ctx.strokeStyle = f.color;
+      ctx.globalAlpha = 0.35;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 1;
+
+      // Focal dot
+      ctx.beginPath();
+      ctx.arc(f.x, axisY, 5, 0, Math.PI * 2);
+      ctx.fillStyle = f.color;
+      ctx.fill();
+
+      // Label
+      ctx.font = '12px Noto Sans KR';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = f.color;
+      const labelY = i === 1 ? axisY + 72 : axisY + 58;
+      ctx.fillText(f.label, f.x, labelY);
+    });
+
+    // f labels
+    focals.forEach(f => {
+      ctx.font = 'bold 18px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = f.color;
+      ctx.globalAlpha = 0.6;
+      ctx.fillText('f', f.x, axisY - 56);
+      ctx.globalAlpha = 1;
+    });
+
+    // ── Aberration bracket ──
+    const bracketY = axisY + 90;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(focalB, bracketY);
+    ctx.lineTo(focalR, bracketY);
+    ctx.strokeStyle = 'rgba(255,220,60,0.6)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    [focalB, focalR].forEach(x => {
+      ctx.beginPath();
+      ctx.moveTo(x, bracketY - 5);
+      ctx.lineTo(x, bracketY + 5);
+      ctx.strokeStyle = 'rgba(255,220,60,0.6)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    });
+
+    ctx.fillStyle = 'rgba(255,220,60,0.8)';
+    ctx.font = 'bold 12px Noto Sans KR';
+    ctx.textAlign = 'center';
+    ctx.fillText('색수차 (초점 거리 차이가 큼)', (focalB + focalR) / 2, bracketY + 20);
+
+    // ── Color legend ──
+    const legX = W - 155, legY = 30;
+    [
+      { c: '#ff4444', n: '빨강 (R) — 최소 굴절' },
+      { c: '#33cc33', n: '초록 (G) — 중간 굴절' },
+      { c: '#3388ff', n: '파랑 (B) — 최대 굴절' },
+    ].forEach((item, i) => {
+      ctx.beginPath();
+      ctx.moveTo(legX, legY + i * 22);
+      ctx.lineTo(legX + 24, legY + i * 22);
+      ctx.strokeStyle = item.c;
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.font = '12px Noto Sans KR';
+      ctx.textAlign = 'left';
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.fillText(item.n, legX + 30, legY + i * 22 + 4);
+    });
+
+    time += 0.016;
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ════════════════════════════════════════════════════════
+// SECTION 1: Blurry / Sharp image comparison
+// ════════════════════════════════════════════════════════
+(function() {
+  // Draw a "cell" pattern
+  function drawCell(ctx, w, h, blur) {
+    ctx.fillStyle = '#f8f4f0';
+    ctx.fillRect(0, 0, w, h);
+
+    const cx = w/2, cy = h/2;
+    // Draw multiple "cells"
+    const cells = [
+      {x: cx, y: cy, r: 45},
+      {x: cx-70, y: cy-30, r: 35},
+      {x: cx+65, y: cy+25, r: 38},
+      {x: cx-50, y: cy+50, r: 30},
+      {x: cx+50, y: cy-45, r: 32},
+      {x: cx-10, y: cy+60, r: 28},
+      {x: cx+30, y: cy-10, r: 40},
+    ];
+
+    cells.forEach(cell => {
+      if (blur > 0) {
+        // Draw chromatic fringing
+        for (let layer = blur; layer >= 0; layer--) {
+          const fringeColors = ['rgba(255,60,60,0.12)', 'rgba(60,60,255,0.12)'];
+          fringeColors.forEach((fc, fi) => {
+            ctx.beginPath();
+            ctx.arc(cell.x + (fi === 0 ? layer : -layer), cell.y, cell.r + layer, 0, Math.PI * 2);
+            ctx.strokeStyle = fc;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+          });
+        }
+      }
+      // Cell membrane
+      ctx.beginPath();
+      ctx.arc(cell.x, cell.y, cell.r, 0, Math.PI * 2);
+      ctx.strokeStyle = blur > 0 ? 'rgba(80,60,80,0.5)' : 'rgba(50,30,50,0.9)';
+      ctx.lineWidth = blur > 0 ? 2 : 2.5;
+      ctx.stroke();
+
+      // Nucleus
+      ctx.beginPath();
+      ctx.arc(cell.x + 5, cell.y - 3, cell.r * 0.35, 0, Math.PI * 2);
+      ctx.fillStyle = blur > 0 ? 'rgba(100,50,120,0.25)' : 'rgba(100,50,120,0.55)';
+      ctx.fill();
+      ctx.strokeStyle = blur > 0 ? 'rgba(100,50,120,0.3)' : 'rgba(100,50,120,0.7)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    });
+  }
+
+  const c1 = document.getElementById('canvasBlurry');
+  const c2 = document.getElementById('canvasSharp');
+  drawCell(c1.getContext('2d'), 260, 200, 4);
+  drawCell(c2.getContext('2d'), 260, 200, 0);
+})();
+
+// ════════════════════════════════════════════════════════
+// SECTION 2: ACHROMATIC LENS ANIMATION (detailed ray-trace)
+// ════════════════════════════════════════════════════════
+(function() {
+  const canvas = document.getElementById('canvasAchromat');
+  const ctx = canvas.getContext('2d');
+  const W = 900, H = 460;
+  let time = 0;
+
+  const axisY = H / 2;
+  const lensH = 300;
+  const halfH = lensH / 2;
+
+  // Achromatic doublet: convex crown + concave flint, cemented together
+  const L1 = { cx: 230, leftR: 50, rightR: 18, thick: 50, color: 'rgba(100,160,255,0.22)', stroke: 'rgba(100,160,255,0.55)' };
+  const L2 = { cx: 272, leftR: -14, rightR: -32, thick: 34, color: 'rgba(255,180,80,0.20)', stroke: 'rgba(255,180,80,0.55)' };
+
+  function drawThickLens(lens) {
+    const { cx, leftR, rightR, thick, color, stroke } = lens;
+    const lx = cx - thick / 2;
+    const rx = cx + thick / 2;
+    ctx.beginPath();
+    ctx.moveTo(lx, axisY - halfH);
+    ctx.quadraticCurveTo(lx - leftR, axisY, lx, axisY + halfH);
+    ctx.lineTo(rx, axisY + halfH);
+    ctx.quadraticCurveTo(rx + rightR, axisY, rx, axisY - halfH);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  // ── Ray paths ──
+  // R & B converge at same focal point; G focuses slightly closer (residual aberration)
+  const focalRB = 640;   // R+B focal point
+  const focalG_offset = -35; // G focuses 35px closer
+
+  function getAchromatRayPaths(yIn) {
+    const dy = yIn - axisY;
+    const entryX = L1.cx - L1.thick/2 - 2;
+    const l1l2X = L1.cx + L1.thick/2 + 2;  // junction between L1 and L2
+    const exitX = L2.cx + L2.thick/2 + 2;
+    const pastX = 860;
+
+    return {
+      // Red: least refraction at each surface, converges at focalRB
+      red: [
+        { x: 0, y: yIn },
+        { x: entryX, y: yIn },
+        { x: l1l2X, y: axisY + dy * 0.68 },
+        { x: exitX, y: axisY + dy * 0.48 },
+        { x: focalRB, y: axisY },
+        { x: pastX, y: axisY - dy * 0.32 },
+      ],
+      // Green: medium refraction, but focuses CLOSER (residual secondary spectrum)
+      green: [
+        { x: 0, y: yIn },
+        { x: entryX, y: yIn },
+        { x: l1l2X, y: axisY + dy * 0.55 },
+        { x: exitX, y: axisY + dy * 0.35 },
+        { x: focalRB + focalG_offset, y: axisY },
+        { x: pastX, y: axisY - dy * 0.38 },
+      ],
+      // Blue: most refraction at each surface, converges at focalRB (same as red)
+      blue: [
+        { x: 0, y: yIn },
+        { x: entryX, y: yIn },
+        { x: l1l2X, y: axisY + dy * 0.38 },
+        { x: exitX, y: axisY + dy * 0.24 },
+        { x: focalRB, y: axisY },
+        { x: pastX, y: axisY - dy * 0.32 },
+      ],
+    };
+  }
+
+  const rayColors = { red: '#ff4444', green: '#33cc33', blue: '#3388ff' };
+
+  function drawRayPath(points, color, alpha) {
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) {
+      ctx.lineTo(points[i].x, points[i].y);
+    }
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.2;
+    ctx.globalAlpha = alpha;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  function drawPulse(points, color, t) {
+    const totalLen = [0];
+    let cumLen = 0;
+    for (let i = 1; i < points.length; i++) {
+      const dx = points[i].x - points[i-1].x;
+      const dy = points[i].y - points[i-1].y;
+      cumLen += Math.sqrt(dx*dx + dy*dy);
+      totalLen.push(cumLen);
+    }
+    const targetLen = t * cumLen;
+    for (let i = 1; i < totalLen.length; i++) {
+      if (totalLen[i] >= targetLen) {
+        const segFrac = (targetLen - totalLen[i-1]) / (totalLen[i] - totalLen[i-1]);
+        const px = points[i-1].x + (points[i].x - points[i-1].x) * segFrac;
+        const py = points[i-1].y + (points[i].y - points[i-1].y) * segFrac;
+        const grad = ctx.createRadialGradient(px, py, 0, px, py, 10);
+        grad.addColorStop(0, color);
+        grad.addColorStop(1, 'transparent');
+        ctx.beginPath();
+        ctx.arc(px, py, 10, 0, Math.PI * 2);
+        ctx.fillStyle = grad;
+        ctx.globalAlpha = 0.7;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        break;
+      }
+    }
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = 'rgba(8,8,24,0.4)';
+    ctx.fillRect(0, 0, W, H);
+
+    // ── Optical axis ──
+    ctx.setLineDash([6, 6]);
+    ctx.beginPath();
+    ctx.moveTo(0, axisY);
+    ctx.lineTo(W, axisY);
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // ── Draw doublet lenses ──
+    drawThickLens(L1);
+    drawThickLens(L2);
+
+    // Cemented surface indicator
+    const cementX = (L1.cx + L1.thick/2 + L2.cx - L2.thick/2) / 2;
+    ctx.setLineDash([2, 3]);
+    ctx.beginPath();
+    ctx.moveTo(cementX, axisY - halfH + 5);
+    ctx.lineTo(cementX, axisY + halfH - 5);
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // ── Lens labels ──
+    ctx.font = '13px Noto Sans KR';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(100,160,255,0.8)';
+    ctx.fillText('크라운 유리', L1.cx, axisY + halfH + 22);
+    ctx.fillStyle = 'rgba(255,180,80,0.8)';
+    ctx.fillText('플린트 유리', L2.cx, axisY + halfH + 22);
+
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.font = '11px Noto Sans KR';
+    ctx.fillText('(볼록, 저분산)', L1.cx, axisY + halfH + 38);
+    ctx.fillText('(오목, 고분산)', L2.cx, axisY + halfH + 38);
+
+    // "접합" label
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+    ctx.font = '10px Noto Sans KR';
+    ctx.fillText('접합면', cementX, axisY - halfH - 8);
+
+    // ── Incoming white rays ──
+    const rayInputs = [
+      { yIn: axisY - 80 },
+      { yIn: axisY - 40 },
+      { yIn: axisY },
+      { yIn: axisY + 40 },
+      { yIn: axisY + 80 },
+    ];
+
+    const pulse = Math.sin(time * 2) * 0.12 + 0.88;
+    rayInputs.forEach(r => {
+      ctx.beginPath();
+      ctx.moveTo(0, r.yIn);
+      ctx.lineTo(L1.cx - L1.thick/2 - 2, r.yIn);
+      ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+      ctx.lineWidth = r.yIn === axisY ? 2.5 : 2;
+      ctx.globalAlpha = pulse;
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    });
+
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 14px Noto Sans KR';
+    ctx.textAlign = 'left';
+    ctx.fillText('백색광', 12, axisY - 95);
+
+    // ── Draw color rays ──
+    const pulseT = (time * 0.3) % 1;
+    const colorOrder = ['red', 'green', 'blue'];
+
+    rayInputs.forEach(r => {
+      const paths = getAchromatRayPaths(r.yIn);
+      colorOrder.forEach(c => {
+        const pts = paths[c];
+        const rayFromLens = pts.slice(1);
+        drawRayPath(rayFromLens, rayColors[c], r.yIn === axisY ? 0.9 : 0.7);
+        drawPulse(pts, rayColors[c], pulseT);
+      });
+    });
+
+    // ── R+B Focal point ──
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(focalRB, axisY - 60);
+    ctx.lineTo(focalRB, axisY + 60);
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // R+B glow
+    const glowSize = 12 + Math.sin(time * 3) * 2;
+    const gradRB = ctx.createRadialGradient(focalRB, axisY, 0, focalRB, axisY, glowSize);
+    gradRB.addColorStop(0, 'rgba(200,150,255,0.9)');
+    gradRB.addColorStop(0.4, 'rgba(200,150,255,0.3)');
+    gradRB.addColorStop(1, 'rgba(200,150,255,0)');
+    ctx.beginPath();
+    ctx.arc(focalRB, axisY, glowSize, 0, Math.PI * 2);
+    ctx.fillStyle = gradRB;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(focalRB, axisY, 5, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(200,150,255,0.95)';
+    ctx.fill();
+
+    // ── G focal point (slightly closer) ──
+    const gFocal = focalRB + focalG_offset;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(gFocal, axisY - 40);
+    ctx.lineTo(gFocal, axisY + 40);
+    ctx.strokeStyle = 'rgba(51,204,51,0.35)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.beginPath();
+    ctx.arc(gFocal, axisY, 4, 0, Math.PI * 2);
+    ctx.fillStyle = '#33cc33';
+    ctx.fill();
+
+    // ── Labels ──
+    ctx.font = 'bold 22px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.fillText('f', focalRB, axisY - 68);
+
+    ctx.font = 'bold 13px Noto Sans KR';
+    ctx.fillStyle = 'rgba(200,150,255,0.95)';
+    ctx.fillText('R + B 초점 일치', focalRB, axisY + 80);
+
+    ctx.fillStyle = '#33cc33';
+    ctx.font = '12px Noto Sans KR';
+    ctx.fillText('G 초점 (약간 앞)', gFocal, axisY + 56);
+
+    // ── Residual aberration bracket ──
+    const bracketY = axisY + 95;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(gFocal, bracketY);
+    ctx.lineTo(focalRB, bracketY);
+    ctx.strokeStyle = 'rgba(255,220,60,0.6)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // bracket end ticks
+    [gFocal, focalRB].forEach(x => {
+      ctx.beginPath();
+      ctx.moveTo(x, bracketY - 5);
+      ctx.lineTo(x, bracketY + 5);
+      ctx.strokeStyle = 'rgba(255,220,60,0.6)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    });
+
+    ctx.fillStyle = 'rgba(255,220,60,0.8)';
+    ctx.font = 'bold 11px Noto Sans KR';
+    ctx.fillText('잔여 색수차 (이차 스펙트럼)', (gFocal + focalRB) / 2, bracketY + 18);
+
+    // ── Color legend ──
+    const legX = W - 155, legY = 30;
+    [
+      { c: '#ff4444', n: '빨강 (R) — 최소 굴절' },
+      { c: '#33cc33', n: '초록 (G) — 중간 굴절' },
+      { c: '#3388ff', n: '파랑 (B) — 최대 굴절' },
+    ].forEach((item, i) => {
+      ctx.beginPath();
+      ctx.moveTo(legX, legY + i * 22);
+      ctx.lineTo(legX + 24, legY + i * 22);
+      ctx.strokeStyle = item.c;
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.font = '12px Noto Sans KR';
+      ctx.textAlign = 'left';
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.fillText(item.n, legX + 30, legY + i * 22 + 4);
+    });
+
+    time += 0.016;
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ════════════════════════════════════════════════════════
+// SECTION 3: APOCHROMAT ANIMATION (detailed ray-trace)
+// ════════════════════════════════════════════════════════
+(function() {
+  const canvas = document.getElementById('canvasApochromat');
+  const ctx = canvas.getContext('2d');
+  const W = 900, H = 460;
+  let time = 0;
+
+  // ── Lens geometry (realistic thick lens cross-sections) ──
+  // Each lens defined by left/right surface curvature + position
+  const axisY = H / 2;       // optical axis
+  const lensH = 300;          // lens height (diameter)
+  const halfH = lensH / 2;
+
+  // Lens group centered around x=240
+  const L1 = { cx: 210, leftR: 50, rightR: 30, thick: 44, color: 'rgba(100,160,255,0.22)', stroke: 'rgba(100,160,255,0.55)' };
+  const L2 = { cx: 262, leftR: -22, rightR: -30, thick: 26, color: 'rgba(255,180,80,0.20)', stroke: 'rgba(255,180,80,0.55)' };
+  const L3 = { cx: 302, leftR: 35, rightR: 20, thick: 36, color: 'rgba(100,220,160,0.18)', stroke: 'rgba(100,220,160,0.50)' };
+
+  function drawThickLens(lens) {
+    const { cx, leftR, rightR, thick, color, stroke } = lens;
+    const lx = cx - thick / 2;
+    const rx = cx + thick / 2;
+    // Left surface: positive = convex to the left, negative = concave
+    // Right surface: positive = convex to the right, negative = concave
+    ctx.beginPath();
+    // Top-left point
+    ctx.moveTo(lx, axisY - halfH);
+    // Left surface curve
+    ctx.quadraticCurveTo(lx - leftR, axisY, lx, axisY + halfH);
+    // Bottom edge to right
+    ctx.lineTo(rx, axisY + halfH);
+    // Right surface curve
+    ctx.quadraticCurveTo(rx + rightR, axisY, rx, axisY - halfH);
+    // Top edge back
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  // ── Ray paths: define explicit waypoints per color per ray height ──
+  // For each color (R, G, B), we define how the ray bends at each surface.
+  // Top ray (entering above axis), center ray (on axis), bottom ray (below axis).
+  // Waypoints: [incoming] → [L1 front] → [L1-L2 gap] → [L2-L3 gap] → [L3 exit] → [focal pt] → [past focus]
+  //
+  // The key physics: blue bends most, red bends least at each surface.
+  // The lens combination is designed so all three converge at the same focal point.
+
+  const focalX = 640;
+
+  // Top ray (y_in = axisY - 80)
+  const topY = axisY - 80;
+  // Bottom ray (symmetric)
+  const botY = axisY + 80;
+
+  function getRayPaths(yIn, sign) {
+    // sign: +1 for top ray (bends down toward axis), -1 for bottom ray (bends up)
+    // For center ray, displacement is 0
+    const s = sign;
+    const entryX = L1.cx - L1.thick/2 - 2; // front of lens 1
+    const l1l2X = L1.cx + L1.thick/2 + 2;  // between L1 and L2
+    const l2X = L2.cx - L2.thick/2;
+    const l2l3X = L2.cx + L2.thick/2 + 2;  // between L2 and L3
+    const l3X = L3.cx - L3.thick/2;
+    const exitX = L3.cx + L3.thick/2 + 2;  // exit of lens 3
+    const pastX = 860;
+
+    // Each color bends differently at each surface.
+    // Red: least refraction, Green: medium, Blue: most
+    // But the triplet is designed to converge them all at focalX on axis.
+
+    const dy = yIn - axisY; // displacement from axis
+
+    return {
+      red: [
+        { x: 0, y: yIn },
+        { x: entryX, y: yIn },
+        // Red bends LEAST at L1 front → still far from axis inside L1
+        { x: l1l2X, y: axisY + dy * 0.72 },
+        // Between L1-L2: Red barely bends at concave surface
+        { x: l2l3X, y: axisY + dy * 0.55 },
+        // Exit L3: Red has been gradually steered
+        { x: exitX, y: axisY + dy * 0.42 },
+        // Converge at focal point
+        { x: focalX, y: axisY },
+        // Past focus: diverge symmetrically
+        { x: pastX, y: axisY - dy * 0.35 },
+      ],
+      green: [
+        { x: 0, y: yIn },
+        { x: entryX, y: yIn },
+        // Green bends MEDIUM at L1
+        { x: l1l2X, y: axisY + dy * 0.58 },
+        // Between L2-L3
+        { x: l2l3X, y: axisY + dy * 0.38 },
+        // Exit L3
+        { x: exitX, y: axisY + dy * 0.28 },
+        // Converge at focal point
+        { x: focalX, y: axisY },
+        // Past focus
+        { x: pastX, y: axisY - dy * 0.35 },
+      ],
+      blue: [
+        { x: 0, y: yIn },
+        { x: entryX, y: yIn },
+        // Blue bends MOST at L1
+        { x: l1l2X, y: axisY + dy * 0.40 },
+        // Concave L2 bends blue back outward more
+        { x: l2l3X, y: axisY + dy * 0.26 },
+        // Exit L3
+        { x: exitX, y: axisY + dy * 0.18 },
+        // Converge at focal point
+        { x: focalX, y: axisY },
+        // Past focus
+        { x: pastX, y: axisY - dy * 0.35 },
+      ],
+    };
+  }
+
+  const rayColors = {
+    red: '#ff4444',
+    green: '#33cc33',
+    blue: '#3388ff',
+  };
+
+  function drawRayPath(points, color, alpha) {
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) {
+      ctx.lineTo(points[i].x, points[i].y);
+    }
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.2;
+    ctx.globalAlpha = alpha;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  // ── Animated light pulse traveling along ray ──
+  function drawPulse(points, color, t) {
+    // t: 0..1 position along the path
+    const totalLen = [];
+    let cumLen = 0;
+    totalLen.push(0);
+    for (let i = 1; i < points.length; i++) {
+      const dx = points[i].x - points[i-1].x;
+      const dy = points[i].y - points[i-1].y;
+      cumLen += Math.sqrt(dx*dx + dy*dy);
+      totalLen.push(cumLen);
+    }
+    const targetLen = t * cumLen;
+    for (let i = 1; i < totalLen.length; i++) {
+      if (totalLen[i] >= targetLen) {
+        const segFrac = (targetLen - totalLen[i-1]) / (totalLen[i] - totalLen[i-1]);
+        const px = points[i-1].x + (points[i].x - points[i-1].x) * segFrac;
+        const py = points[i-1].y + (points[i].y - points[i-1].y) * segFrac;
+        const grad = ctx.createRadialGradient(px, py, 0, px, py, 10);
+        grad.addColorStop(0, color);
+        grad.addColorStop(1, 'transparent');
+        ctx.beginPath();
+        ctx.arc(px, py, 10, 0, Math.PI * 2);
+        ctx.fillStyle = grad;
+        ctx.globalAlpha = 0.7;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        break;
+      }
+    }
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+
+    // Dark background
+    ctx.fillStyle = 'rgba(8,8,24,0.4)';
+    ctx.fillRect(0, 0, W, H);
+
+    // ── Optical axis (dashed) ──
+    ctx.setLineDash([6, 6]);
+    ctx.beginPath();
+    ctx.moveTo(0, axisY);
+    ctx.lineTo(W, axisY);
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // ── Draw lens elements ──
+    drawThickLens(L1);
+    drawThickLens(L2);
+    drawThickLens(L3);
+
+    // ── Lens labels ──
+    ctx.font = '13px Noto Sans KR';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(100,160,255,0.8)';
+    ctx.fillText('렌즈 1', L1.cx, axisY + halfH + 22);
+    ctx.fillStyle = 'rgba(255,180,80,0.8)';
+    ctx.fillText('렌즈 2', L2.cx, axisY + halfH + 40);
+    ctx.fillStyle = 'rgba(100,220,160,0.8)';
+    ctx.fillText('렌즈 3', L3.cx, axisY + halfH + 22);
+
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.font = '11px Noto Sans KR';
+    ctx.fillText('볼록 (크라운)', L1.cx, axisY + halfH + 38);
+    ctx.fillText('오목 (플린트)', L2.cx, axisY + halfH + 56);
+    ctx.fillText('볼록 (형석)', L3.cx, axisY + halfH + 38);
+
+    // ── Draw rays for top, center, bottom ──
+    const rayInputs = [
+      { yIn: axisY - 80, sign: 1 },
+      { yIn: axisY - 40, sign: 1 },
+      { yIn: axisY,       sign: 0 },
+      { yIn: axisY + 40, sign: -1 },
+      { yIn: axisY + 80, sign: -1 },
+    ];
+
+    // Incoming white rays
+    const pulse = Math.sin(time * 2) * 0.12 + 0.88;
+    rayInputs.forEach(r => {
+      ctx.beginPath();
+      ctx.moveTo(0, r.yIn);
+      ctx.lineTo(L1.cx - L1.thick/2 - 2, r.yIn);
+      ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+      ctx.lineWidth = r.yIn === axisY ? 2.5 : 2;
+      ctx.globalAlpha = pulse;
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    });
+
+    // White light label
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 14px Noto Sans KR';
+    ctx.textAlign = 'left';
+    ctx.fillText('백색광', 12, axisY - 95);
+
+    // Color rays
+    const pulseT = (time * 0.3) % 1; // pulse position 0..1
+    const colorOrder = ['red', 'green', 'blue']; // draw order: red behind, blue in front
+
+    rayInputs.forEach(r => {
+      const paths = getRayPaths(r.yIn, r.sign);
+      colorOrder.forEach(c => {
+        const pts = paths[c];
+        // Only draw from lens entry onward (index 1+)
+        const rayFromLens = pts.slice(1);
+        drawRayPath(rayFromLens, rayColors[c], r.yIn === axisY ? 0.9 : 0.7);
+
+        // Draw pulse
+        drawPulse(pts, rayColors[c], pulseT);
+      });
+    });
+
+    // ── Focal point marker ──
+    // Dashed vertical line at focal point
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(focalX, axisY - 60);
+    ctx.lineTo(focalX, axisY + 60);
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Glowing focal point
+    const glowSize = 14 + Math.sin(time * 3) * 3;
+    const gradient = ctx.createRadialGradient(focalX, axisY, 0, focalX, axisY, glowSize);
+    gradient.addColorStop(0, 'rgba(255,255,255,0.95)');
+    gradient.addColorStop(0.3, 'rgba(220,220,255,0.5)');
+    gradient.addColorStop(1, 'rgba(200,200,255,0)');
+    ctx.beginPath();
+    ctx.arc(focalX, axisY, glowSize, 0, Math.PI * 2);
+    ctx.fillStyle = gradient;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(focalX, axisY, 5, 0, Math.PI * 2);
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+
+    // Focal point label
+    ctx.font = 'bold 22px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.fillText('f', focalX, axisY - 70);
+
+    ctx.font = 'bold 13px Noto Sans KR';
+    ctx.fillStyle = '#fff';
+    ctx.fillText('R + G + B 초점 일치', focalX, axisY + 85);
+    ctx.font = '11px Noto Sans KR';
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.fillText('색수차 거의 완전 제거', focalX, axisY + 103);
+
+    // ── Color legend in top-right ──
+    const legX = W - 150, legY = 30;
+    [
+      { c: '#ff4444', n: '빨강 (R) — 최소 굴절' },
+      { c: '#33cc33', n: '초록 (G) — 중간 굴절' },
+      { c: '#3388ff', n: '파랑 (B) — 최대 굴절' },
+    ].forEach((item, i) => {
+      ctx.beginPath();
+      ctx.moveTo(legX, legY + i * 22);
+      ctx.lineTo(legX + 24, legY + i * 22);
+      ctx.strokeStyle = item.c;
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.font = '12px Noto Sans KR';
+      ctx.textAlign = 'left';
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.fillText(item.n, legX + 30, legY + i * 22 + 4);
+    });
+
+    // ── Refraction annotations (small arrows at surfaces) ──
+    // Show that rays split at each surface
+    const surfaceXs = [
+      L1.cx - L1.thick/2,
+      L1.cx + L1.thick/2,
+      L2.cx - L2.thick/2,
+      L2.cx + L2.thick/2,
+      L3.cx - L3.thick/2,
+      L3.cx + L3.thick/2,
+    ];
+    const annotAlpha = 0.15 + Math.sin(time * 2) * 0.08;
+    surfaceXs.forEach(sx => {
+      ctx.beginPath();
+      ctx.moveTo(sx, axisY - halfH - 5);
+      ctx.lineTo(sx, axisY - halfH + 10);
+      ctx.strokeStyle = `rgba(255,255,255,${annotAlpha})`;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    });
+
+    time += 0.016;
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ════════════════════════════════════════════════════════
+// SECTION 4: COMPARISON MINI DIAGRAMS
+// ════════════════════════════════════════════════════════
+function drawComparisonLens(canvasId, focalPoints) {
+  const canvas = document.getElementById(canvasId);
+  const ctx = canvas.getContext('2d');
+  let time = 0;
+
+  function draw() {
+    ctx.clearRect(0, 0, 220, 180);
+
+    const lensX = 60;
+    const lensY = 90;
+
+    // Mini lens
+    drawLens(ctx, lensX, lensY, 100, 16, 'rgba(150,200,255,0.4)', true);
+
+    // Rays
+    const colors = ['#ff4444', '#44cc44', '#4488ff'];
+    focalPoints.forEach((fp, i) => {
+      const fx = fp + Math.sin(time * 1.5 + i) * 2;
+      ctx.globalAlpha = 0.7;
+      ctx.strokeStyle = colors[i];
+      ctx.lineWidth = 1.8;
+
+      ctx.beginPath();
+      ctx.moveTo(lensX, lensY - 30);
+      ctx.lineTo(fx, lensY);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(lensX, lensY + 30);
+      ctx.lineTo(fx, lensY);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+
+      ctx.beginPath();
+      ctx.arc(fx, lensY, 3.5, 0, Math.PI * 2);
+      ctx.fillStyle = colors[i];
+      ctx.fill();
+    });
+
+    time += 0.016;
+    requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+// Single lens: all 3 colors at different positions
+drawComparisonLens('canvasComp1', [130, 155, 185]);
+// Achromatic: R&B same, G slightly off
+drawComparisonLens('canvasComp2', [165, 155, 165]);
+// Apochromat: all same
+drawComparisonLens('canvasComp3', [165, 165, 165]);
+
+// ════════════════════════════════════════════════════════
+// SECTION 4: FOCAL DEVIATION CHART
+// ════════════════════════════════════════════════════════
+(function() {
+  const canvas = document.getElementById('canvasChart');
+  const ctx = canvas.getContext('2d');
+  let animProgress = 0;
+  let started = false;
+
+  const observer2 = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting && !started) {
+      started = true;
+      animate();
+    }
+  }, { threshold: 0.3 });
+  observer2.observe(canvas);
+
+  function animate() {
+    if (animProgress < 1) {
+      animProgress += 0.015;
+      requestAnimationFrame(animate);
+    }
+    drawChart();
+  }
+
+  function drawChart() {
+    const w = 700, h = 280;
+    ctx.clearRect(0, 0, w, h);
+
+    const pad = { left: 80, right: 30, top: 30, bottom: 50 };
+    const cw = w - pad.left - pad.right;
+    const ch = h - pad.top - pad.bottom;
+
+    // Axis
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.lineWidth = 1;
+
+    // X axis
+    ctx.beginPath();
+    ctx.moveTo(pad.left, pad.top + ch/2);
+    ctx.lineTo(pad.left + cw, pad.top + ch/2);
+    ctx.stroke();
+
+    // Y axis
+    ctx.beginPath();
+    ctx.moveTo(pad.left, pad.top);
+    ctx.lineTo(pad.left, pad.top + ch);
+    ctx.stroke();
+
+    // Labels
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.font = '11px Noto Sans KR';
+    ctx.textAlign = 'center';
+    ctx.fillText('파장 (nm)', pad.left + cw/2, h - 8);
+
+    ctx.save();
+    ctx.translate(20, pad.top + ch/2);
+    ctx.rotate(-Math.PI/2);
+    ctx.fillText('초점 편차', 0, 0);
+    ctx.restore();
+
+    // Wavelength labels
+    const wavelengths = [400, 450, 500, 550, 600, 650, 700];
+    const wColors = ['#8800ff', '#4400ff', '#00aaff', '#44cc44', '#cccc00', '#ff8800', '#ff0000'];
+    wavelengths.forEach((wl, i) => {
+      const x = pad.left + (i / (wavelengths.length - 1)) * cw;
+      ctx.fillStyle = wColors[i];
+      ctx.fillText(wl, x, pad.top + ch + 20);
+
+      ctx.beginPath();
+      ctx.moveTo(x, pad.top);
+      ctx.lineTo(x, pad.top + ch);
+      ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+      ctx.stroke();
+    });
+
+    // Zero line label
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.textAlign = 'right';
+    ctx.fillText('0', pad.left - 8, pad.top + ch/2 + 4);
+
+    // Curves
+    const t = Math.min(animProgress, 1);
+
+    // Data: normalized deviation per wavelength position (0=400nm, 1=700nm)
+    function singleLens(x) { return -0.8 + 1.6 * x; } // linear: short λ focus near, long far
+    function achromatic(x) { return 0.5 * Math.sin((x - 0.5) * Math.PI * 2) * 0.6; } // R,B corrected, G off
+    function apochromat(x) { return 0.08 * Math.sin((x - 0.5) * Math.PI * 4); } // nearly flat
+
+    const curves = [
+      { fn: singleLens, color: '#ff4444', name: '단일 렌즈', dash: [] },
+      { fn: achromatic, color: '#44cc44', name: '색지움렌즈', dash: [8, 4] },
+      { fn: apochromat, color: '#4488ff', name: '아포크로맷', dash: [3, 3] },
+    ];
+
+    curves.forEach((curve, ci) => {
+      ctx.beginPath();
+      ctx.setLineDash(curve.dash);
+      ctx.strokeStyle = curve.color;
+      ctx.lineWidth = 2.5;
+      ctx.globalAlpha = 0.9;
+
+      const numPoints = Math.floor(100 * t);
+      for (let i = 0; i <= numPoints; i++) {
+        const xNorm = i / 100;
+        const x = pad.left + xNorm * cw;
+        const y = pad.top + ch/2 - curve.fn(xNorm) * (ch/2) * 0.85;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 1;
+
+      // Legend
+      const ly = pad.top + 10 + ci * 20;
+      ctx.fillStyle = curve.color;
+      ctx.fillRect(pad.left + cw - 130, ly, 16, 3);
+      ctx.font = '12px Noto Sans KR';
+      ctx.textAlign = 'left';
+      ctx.fillText(curve.name, pad.left + cw - 108, ly + 6);
+    });
+  }
+})();
+
+// ════════════════════════════════════════════════════════
+// SECTION 5: TIMELINE
+// ════════════════════════════════════════════════════════
+(function() {
+  const canvas = document.getElementById('canvasTimeline');
+  const ctx = canvas.getContext('2d');
+
+  const events = [
+    { year: '18세기', label: '색수차 문제 인식', color: '#ff6666' },
+    { year: '1733', label: '색지움렌즈 발명', color: '#66cc66' },
+    { year: '1868', label: '자이스 + 아베 협력', color: '#6688ff' },
+    { year: '1886', label: '아포크로맷 완성', color: '#cc66ff' },
+  ];
+
+  let animProgress = 0;
+  let started = false;
+
+  const obs = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting && !started) {
+      started = true;
+      animate();
+    }
+  }, { threshold: 0.3 });
+  obs.observe(canvas);
+
+  function animate() {
+    if (animProgress < 1) {
+      animProgress += 0.012;
+      requestAnimationFrame(animate);
+    }
+    drawTimeline();
+  }
+
+  function drawTimeline() {
+    const w = 800, h = 120;
+    ctx.clearRect(0, 0, w, h);
+
+    const startX = 80, endX = w - 80;
+    const y = 50;
+    const lineLen = (endX - startX) * Math.min(animProgress * 1.2, 1);
+
+    // Line
+    ctx.beginPath();
+    ctx.moveTo(startX, y);
+    ctx.lineTo(startX + lineLen, y);
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    events.forEach((evt, i) => {
+      const x = startX + (i / (events.length - 1)) * (endX - startX);
+      const progress = Math.max(0, Math.min(1, (animProgress - i * 0.2) * 3));
+      if (progress <= 0) return;
+
+      ctx.globalAlpha = progress;
+
+      // Dot
+      ctx.beginPath();
+      ctx.arc(x, y, 8 * progress, 0, Math.PI * 2);
+      ctx.fillStyle = evt.color;
+      ctx.fill();
+
+      // Year
+      ctx.font = 'bold 13px Noto Sans KR';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = evt.color;
+      ctx.fillText(evt.year, x, y - 20);
+
+      // Label
+      ctx.font = '12px Noto Sans KR';
+      ctx.fillStyle = 'rgba(255,255,255,0.8)';
+      ctx.fillText(evt.label, x, y + 30);
+
+      ctx.globalAlpha = 1;
+    });
+  }
+})();
+</script>
+
+</body>
+</html>
